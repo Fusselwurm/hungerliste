@@ -1,0 +1,10 @@
+{
+  "name": "Hungerliste",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git"
+  },
+  "dependencies": {
+    "node-phantom": "~0.2.4"
+  }
+}
