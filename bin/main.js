@@ -3,6 +3,7 @@
 var
     startPage = 'https://menueweb.hofmann-menue.de/alacarte_33335/MenueTafel.aspx',
     http = require('https'),
+    hofmannLogin = require('../lib/hofmann-login'),
     hofmannExtractor = require('../lib/hofmann-extractor'),
     options = {
         host: 'menueweb.hofmann-menue.de',
@@ -24,15 +25,25 @@ phantom.create(function (err, ph) {
            console.log(status);
 
             setTimeout(function () {
-                page.evaluate(hofmannExtractor.getHofmannList, function (err, res) {
+
+                hofmannLogin(page, function (err, res) {
 
                     console.log(arguments);
                     res.forEach(printResult);
 
                     console.log(res);
 
-                    ph.exit();
-                    process.exit();
+                    hofmannExtractor(page, function () {
+
+                        console.log(arguments);
+                        res.forEach(printResult);
+
+                        console.log(res);
+
+
+                        ph.exit();
+                        process.exit();
+                    });
                 });
             }, 3000);
             console.info('results in 3s...');
