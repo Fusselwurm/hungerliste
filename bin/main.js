@@ -1,14 +1,9 @@
 #!/usr/bin/node
-/*global console,setTimeout */
+/*global console,setTimeout, require */
 var
-    startPage = 'https://menueweb.hofmann-menue.de/alacarte_33335/MenueTafel.aspx',
-    http = require('https'),
+    config = require('../config'),
     hofmannLogin = require('../lib/hofmann-login'),
     hofmannExtractor = require('../lib/hofmann-extractor'),
-    options = {
-        host: 'menueweb.hofmann-menue.de',
-        port: '80'
-    },
 
     printResult = function (set) {
         console.info((set.energyTotal).toFixed(0) + 'kJ ' + set.name);
@@ -20,26 +15,42 @@ var
 
 phantom.create(function (err, ph) {
 
+    if (err) {
+        console.error(err);
+        process.exit(1);
+        return;
+    }
+
     ph.createPage(function (err, page) {
-        page.open(startPage, function (err, status) {
-           console.log(status);
+
+        if (err) {
+            console.error(err);
+            process.exit(2);
+            return;
+        }
+
+        page.open(config.loginPage, function (err, status) {
+           console.log('page opened: ' + status);
+
+            if (err) {
+                throw err;
+            }
 
             setTimeout(function () {
 
                 hofmannLogin(page, function (err, res) {
+                    if (err) {
+                        throw err;
+                    }
+                    console.info('login submitted (?)');
 
-                    console.log(arguments);
-                    res.forEach(printResult);
+                    hofmannExtractor(page, function (err, res) {
 
-                    console.log(res);
-
-                    hofmannExtractor(page, function () {
-
-                        console.log(arguments);
-                        res.forEach(printResult);
+                        if (err) {
+                            throw err;
+                        }
 
                         console.log(res);
-
 
                         ph.exit();
                         process.exit();
