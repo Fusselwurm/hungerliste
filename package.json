@@ -5,6 +5,7 @@
     "type": "git"
   },
   "dependencies": {
-    "node-phantom": "~0.2.4"
+    "node-phantom": "~0.2.4",
+    "async": "~0.2.9"
   }
 }
