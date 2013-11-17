@@ -2,6 +2,7 @@
 /*global console,setTimeout, require */
 var
     config = require('../config'),
+    async = require('../node_modules/async/lib/async'),
     hofmannLogin = require('../lib/hofmann-login'),
     hofmannExtractor = require('../lib/hofmann-extractor'),
 
@@ -10,66 +11,73 @@ var
     },
     phantom = require('node-phantom');
 
+hofmannLogin.setCredentials(config.username, config.password);
 
-//http.request(options);
-
-phantom.create(function (err, ph) {
-
-    if (err) {
-        console.error(err);
-        process.exit(1);
-        return;
-    }
-
-    ph.createPage(function (err, page) {
-
-        if (err) {
-            console.error(err);
-            process.exit(2);
-            return;
-        }
-
+async.waterfall([
+    phantom.create,
+    function (ph, callback) {
+        ph.createPage(callback);
+    },
+    function (page, callback) {
         page.open(config.loginPage, function (err, status) {
-           console.log('page opened: ' + status);
-
             if (err) {
                 throw err;
             }
-
-            setTimeout(function () {
-
-                hofmannLogin(page, function (err, res) {
-                    if (err) {
-                        throw err;
-                    }
-                    console.info('login submitted (?)');
-
-                    hofmannExtractor(page, function (err, res) {
-
-                        if (err) {
-                            throw err;
-                        }
-
-                        console.log(res);
-
-                        ph.exit();
-                        process.exit();
-                    });
-                });
-            }, 3000);
-            console.info('results in 3s...');
+            console.log('page opened: ' + status);
+            callback(err, page);
         });
-    });
-
+    },
+    hofmannLogin,
+    hofmannExtractor,
+    function (result, callback) {
+        console.log('zadumm');
+        callback(null, result);
+    }
+], function () {
+    console.log('end callback');
+    console.error(arguments);
+    console.info('shutting down...');
+    process.exit(0);
 });
-
-
-//
 /*
+ phantom.create(function (err, ph) {
+ ph.createPage(function (err, page) {
+ page.open(config.loginPage, function (err, status) {
+
+ setTimeout(function () {
+
+ hofmannLogin(page, function (err, res) {
+ if (err) {
+ throw err;
+ }
+ console.info('login submitted (?)');
+
+ hofmannExtractor(page, function (err, res) {
+
+ if (err) {
+ throw err;
+ }
+
+ console.log(res);
+
+ ph.exit();
+ process.exit();
+ });
+ });
+ }, 3000);
+ console.info('results in 3s...');
+ });
+ });
+
+ });
+
+
+ //
+ /*
 
 
 
-res = res.map(function (e) {
-	document.evaluate('[clsNaehrwerte])
-	return []
-});*/
+ res = res.map(function (e) {
+ document.evaluate('[clsNaehrwerte])
+ return []
+ });*/
