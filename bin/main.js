@@ -5,15 +5,49 @@ var
     async = require('../node_modules/async/lib/async'),
     hofmannLogin = require('../lib/hofmann-login'),
     hofmannExtractor = require('../lib/hofmann-extractor'),
-
+    pid = process.pid,
     printResult = function (set) {
         console.info((set.energyTotal).toFixed(0) + 'kJ ' + set.name);
+    },
+    setViewPortSize = function (page, callback) {
+        page.set('viewportSize', { width: 1600, height: 900 }, function (err) {
+            callback(err, page);
+        });
+    },
+    setClipRect = function (page, callback) {
+        page.set('clipRect', { left: 0, top: 0, width: 1600, height: 900 }, function (err) {
+            callback(err, page);
+        });
+    },
+    setPageOnInitialized = function (page, callback) {
+        page.evaluate(function () {
+            (function () {
+                var userAgent = window.navigator.userAgent,
+                    platform = window.navigator.platform;
+//
+//                window.navigator.__defineGetter__('width', function () {
+//                    window.navigator.sniffed = true;
+//                    return userAgent;
+//                });
+//
+//                window.navigator.__defineGetter__('height', function () {
+//                    window.navigator.sniffed = true;
+//                    return platform;
+//                });
+                window.screen = {
+                    width: 1600,
+                    height: 900
+                };
+            })();
+        }, function (err) {
+            callback(err, page);
+        });
     },
     logCurrentUrl = function (page, callback) {
         page.get('url', function (err, url) {
             console.log('current url is: ' + url);
             callback(null, page);
-        })
+        });
     },
     getAndSetUserAgent = function (page, callback) {
         page.get('settings', function (err, settings) {
@@ -45,28 +79,62 @@ var
             callback(err, page);
         });
     },
+    setOnConsoleMessage = function (page, callback) {
+        page.set('onConsoleMessage', function (msg) {
+            console.log('browser console message: ' + msg);
+        }, function (err) {
+            callback(err, page);
+        });
+    },
+    render = function (page, callback) {
+        var imgName = pid + '_' + (new Date()).getTime() + '.png';
+        page.render(imgName, function (err) {
+            callback(err, page);
+        });
+    },
     phantom = require('node-phantom');
 
-hofmannLogin.setCredentials(config.username, config.password);
+hofmannLogin.setCredentials(config.username, config.password, config.kundenNummer);
 
 async.waterfall([
-    phantom.create,
+    function (callback) {
+        phantom.create(
+            function (err, ph) {
+                callback(err, ph);
+            }, {
+                parameters:
+                {
+                    'ignore-ssl-errors':'yes',
+                    'disk-cache': 'true',
+                    'max-disk-cache-size': '16384',
+                    'cookies-file': '/tmp/hungerliste.cookies'
+                }
+            }
+        );
+    },
     getNewPage,
+    setPageOnInitialized,
+    setViewPortSize,
+    setClipRect,
+    setOnConsoleMessage,
     getAndSetUserAgent,
     openLoginPage,
     logCurrentUrl,
     hofmannLogin,
+    render,
     //openMenuTafel,
     logCurrentUrl,
-    getAndSetUserAgent,
     hofmannExtractor,
-    function (result, callback) {
-        console.log('zadumm');
-        callback(null, result);
+    function (page, result, callback) {
+        console.log(result);
+        callback(null, page);
+    },
+    render
+], function (err) {
+    if (err) {
+        console.log('end callback with error : ');
+        console.error(err);
     }
-], function () {
-    console.log('end callback');
-    console.error(arguments);
     console.info('shutting down...');
     process.exit(0);
 });
