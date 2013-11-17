@@ -19,8 +19,10 @@ var
         page.get('settings', function (err, settings) {
             console.info('switching user agent from: ' + JSON.stringify(settings.userAgent));
             console.info('to ' + JSON.stringify(config.userAgent));
-            page.set('settings.userAgent', config.userAgent);
-            callback(null, page);
+            settings.userAgent = config.userAgent;
+            page.set('settings', settings, function () {
+                callback(null, page);
+            });
         });
     },
     getNewPage = function (ph, callback) {
@@ -30,6 +32,7 @@ var
         console.log('grrr öffne richtige seite...');
         page.open('https://menueweb.hofmann-menue.de/alacarte_33335/MenueTafel.aspx', function (err, status) {
             console.log('...opened: ' + status);
+            page.clearCookies();
             callback(err, page);
         });
     },
@@ -53,7 +56,7 @@ async.waterfall([
     openLoginPage,
     logCurrentUrl,
     hofmannLogin,
-    openMenuTafel,
+    //openMenuTafel,
     logCurrentUrl,
     getAndSetUserAgent,
     hofmannExtractor,
@@ -67,45 +70,3 @@ async.waterfall([
     console.info('shutting down...');
     process.exit(0);
 });
-/*
- phantom.create(function (err, ph) {
- ph.createPage(function (err, page) {
- page.open(config.loginPage, function (err, status) {
-
- setTimeout(function () {
-
- hofmannLogin(page, function (err, res) {
- if (err) {
- throw err;
- }
- console.info('login submitted (?)');
-
- hofmannExtractor(page, function (err, res) {
-
- if (err) {
- throw err;
- }
-
- console.log(res);
-
- ph.exit();
- process.exit();
- });
- });
- }, 3000);
- console.info('results in 3s...');
- });
- });
-
- });
-
-
- //
- /*
-
-
-
- res = res.map(function (e) {
- document.evaluate('[clsNaehrwerte])
- return []
- });*/
