@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css">
+
+    <!-- jQuery -->
+    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js"></script>
+
+    <!-- DataTables -->
+    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
+</head>
+<body>
+<div id="messages"></div>
+<table id="hungerliste">
+    <thead><tr>
+        <th>Name</th>
+        <th>Masse [kg]</th>
+        <th>Energie [kJ]</th>
+        <th>Energie [kJ/100g]</th>
+    </tr></thead>
+    <tbody></tbody>
+</table>
+<script>
+    $(document).ready(function prepareDataTable() {
+        var dataTable = $('#hungerliste').dataTable({
+            bProcessing: true,
+            //aoColumns:
+            "iDisplayLength": 100,
+            sAjaxSource: 'http://localhost:20654/',
+            fnServerData: function ( sSource, aoData, fnCallback, oSettings ) {
+                oSettings.jqXHR = $.ajax( {
+                    "dataType": 'json',
+                    "type": "GET",
+                    "url": sSource,
+                    "data": aoData,
+                    "error": function () {
+                        $('#messages').html('something went wrong, will try again.');
+                        setTimeout(function () {
+                            dataTable.fnDestroy();
+                            prepareDataTable();
+                        }, 5000);
+
+                    },
+                    "success": function (data, xhr) {
+                        data = data.map(function (obj) {
+                            var arr = [
+                                obj.name,
+                                obj.massInKg,
+                                obj.energyTotal,
+                                obj.energyPerKg / 10
+                            ];
+
+                            return arr;
+                        });
+                        fnCallback({aaData: data}, xhr);
+                    }
+                });
+            }
+        });
+    } );
+</script>
+</body>
+</html>

@@ -147,9 +147,11 @@ http.createServer(function (request, response) {
 
     console.log('getting new request');
 
+
     if (request.method === 'OPTIONS') {
         response.writeHead(200, 'OK', {
-            'Allow' : 'OPTIONS, GET'
+            'Allow' : 'OPTIONS, GET',
+            'Access-Control-Allow-Origin': '*'
         });
         response.end();
         return;
@@ -157,7 +159,8 @@ http.createServer(function (request, response) {
 
     if (request.method !== 'GET') {
         response.writeHead(405, 'method not allowed', {
-            'Allow' : 'OPTIONS, GET'
+            'Allow' : 'OPTIONS, GET',
+            'Access-Control-Allow-Origin': '*'
         });
         response.end();
         return;
@@ -171,10 +174,11 @@ http.createServer(function (request, response) {
         var responseCode = hofmannResult ? 200 : 503,
             responseBody = JSON.stringify(hofmannResult);
         response.writeHead(responseCode, 'This is what I know', {
-            'Content-Type': 'application/json',
-            'Content-Length': responseBody.length
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json; charset=utf8'
+            //'Content-Length': responseBody.length
         });
-        response.end(responseBody);
+        response.end(responseBody, "utf8");
     });
 }).listen(config.port);
 
