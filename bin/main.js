@@ -3,6 +3,8 @@
 var
     config = require('../config'),
     async = require('../node_modules/async/lib/async'),
+    http = require('http'),
+    hofmannResult = null,
     hofmannLogin = require('../lib/hofmann-login'),
     hofmannExtractor = require('../lib/hofmann-extractor'),
     pid = process.pid,
@@ -92,49 +94,90 @@ var
             callback(err, page);
         });
     },
-    phantom = require('node-phantom');
+    phantom = require('node-phantom'),
+    doTheThing = function () {
+        async.waterfall([
+            function (callback) {
+                phantom.create(
+                    function (err, ph) {
+                        callback(err, ph);
+                    }, {
+                        parameters:
+                        {
+                            'ignore-ssl-errors':'yes',
+                            'disk-cache': 'true',
+                            'max-disk-cache-size': '16384',
+                            'cookies-file': '/tmp/hungerliste.cookies'
+                        }
+                    }
+                );
+            },
+            getNewPage,
+            setPageOnInitialized,
+            setViewPortSize,
+            setClipRect,
+            setOnConsoleMessage,
+            getAndSetUserAgent,
+            openLoginPage,
+            logCurrentUrl,
+            hofmannLogin,
+            //render,
+            //openMenuTafel,
+            logCurrentUrl,
+            hofmannExtractor,
+            function (page, result, callback) {
+                console.log(result);
+                hofmannResult = result.result;
+                callback(null, page);
+            },
+            //render
+        ], function (err) {
+            if (err) {
+                console.log('end callback with error : ');
+                console.error(err);
+            }
+        });
+
+    };
 
 hofmannLogin.setCredentials(config.username, config.password, config.kundenNummer);
 
-async.waterfall([
-    function (callback) {
-        phantom.create(
-            function (err, ph) {
-                callback(err, ph);
-            }, {
-                parameters:
-                {
-                    'ignore-ssl-errors':'yes',
-                    'disk-cache': 'true',
-                    'max-disk-cache-size': '16384',
-                    'cookies-file': '/tmp/hungerliste.cookies'
-                }
-            }
-        );
-    },
-    getNewPage,
-    setPageOnInitialized,
-    setViewPortSize,
-    setClipRect,
-    setOnConsoleMessage,
-    getAndSetUserAgent,
-    openLoginPage,
-    logCurrentUrl,
-    hofmannLogin,
-    render,
-    //openMenuTafel,
-    logCurrentUrl,
-    hofmannExtractor,
-    function (page, result, callback) {
-        console.log(result);
-        callback(null, page);
-    },
-    render
-], function (err) {
-    if (err) {
-        console.log('end callback with error : ');
-        console.error(err);
+console.log('creating server on port ' + config.port + '...');
+http.createServer(function (request, response) {
+
+    console.log('getting new request');
+
+    if (request.method === 'OPTIONS') {
+        response.writeHead(200, 'OK', {
+            'Allow' : 'OPTIONS, GET'
+        });
+        response.end();
+        return;
     }
-    console.info('shutting down...');
-    process.exit(0);
-});
+
+    if (request.method !== 'GET') {
+        response.writeHead(405, 'method not allowed', {
+            'Allow' : 'OPTIONS, GET'
+        });
+        response.end();
+        return;
+    }
+
+    request.on('data', function () {
+        console.log('got data :/');
+    });
+
+    request.on('end', function () {
+        var responseCode = hofmannResult ? 200 : 503,
+            responseBody = JSON.stringify(hofmannResult);
+        response.writeHead(responseCode, 'This is what I know', {
+            'Content-Type': 'application/json',
+            'Content-Length': responseBody.length
+        });
+        response.end(responseBody);
+    });
+}).listen(config.port);
+
+
+doTheThing();
+setInterval(doTheThing, 5*60*1000);

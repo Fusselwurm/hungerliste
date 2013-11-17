@@ -3,5 +3,6 @@ module.exports = {
     password: 'xyz+gs5:_?v',
     loginPage: 'https://menueweb.hofmann-menue.de/alacarte_33335/MenueTafel.aspx',
     kundenNummer: 'XX-00000000000',
-    userAgent: 'some shiny browser'
+    userAgent: 'some shiny browser',
+    port: 80
 };
