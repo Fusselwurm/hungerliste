@@ -9,16 +9,31 @@ var
     printResult = function (set) {
         console.info((set.energyTotal).toFixed(0) + 'kJ ' + set.name);
     },
-    phantom = require('node-phantom');
-
-hofmannLogin.setCredentials(config.username, config.password);
-
-async.waterfall([
-    phantom.create,
-    function (ph, callback) {
+    logCurrentUrl = function (page, callback) {
+        page.get('url', function (err, url) {
+            console.log('current url is: ' + url);
+            callback(null, page);
+        })
+    },
+    getAndSetUserAgent = function (page, callback) {
+        page.get('settings', function (err, settings) {
+            console.info('switching user agent from: ' + JSON.stringify(settings.userAgent));
+            console.info('to ' + JSON.stringify(config.userAgent));
+            page.set('settings.userAgent', config.userAgent);
+            callback(null, page);
+        });
+    },
+    getNewPage = function (ph, callback) {
         ph.createPage(callback);
     },
-    function (page, callback) {
+    openMenuTafel = function (page, callback) {
+        console.log('grrr öffne richtige seite...');
+        page.open('https://menueweb.hofmann-menue.de/alacarte_33335/MenueTafel.aspx', function (err, status) {
+            console.log('...opened: ' + status);
+            callback(err, page);
+        });
+    },
+    openLoginPage = function (page, callback) {
         page.open(config.loginPage, function (err, status) {
             if (err) {
                 throw err;
@@ -27,7 +42,20 @@ async.waterfall([
             callback(err, page);
         });
     },
+    phantom = require('node-phantom');
+
+hofmannLogin.setCredentials(config.username, config.password);
+
+async.waterfall([
+    phantom.create,
+    getNewPage,
+    getAndSetUserAgent,
+    openLoginPage,
+    logCurrentUrl,
     hofmannLogin,
+    openMenuTafel,
+    logCurrentUrl,
+    getAndSetUserAgent,
     hofmannExtractor,
     function (result, callback) {
         console.log('zadumm');
