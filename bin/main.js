@@ -126,11 +126,11 @@ var
             logCurrentUrl,
             hofmannExtractor,
             function (page, result, callback) {
-                console.log(result);
+            //    console.log(result);
                 hofmannResult = result.result;
                 callback(null, page);
             },
-            //render
+            render
         ], function (err) {
             if (err) {
                 console.log('end callback with error : ');

@@ -18,7 +18,10 @@
         <th>Name</th>
         <th>Masse [kg]</th>
         <th>Energie [kJ]</th>
+	<th>Preis in Cent</th>
+	<th>Energie fuers Geld [kJ/Euro]</th>
         <th>Energie [kJ/100g]</th>
+        <th>Mit Fleisch?</th>
     </tr></thead>
     <tbody></tbody>
 </table>
@@ -28,7 +31,7 @@
             bProcessing: true,
             //aoColumns:
             "iDisplayLength": 100,
-            sAjaxSource: 'http://localhost:20654/',
+            sAjaxSource: 'http://playground.fusselwurm.de:55111/',
             fnServerData: function ( sSource, aoData, fnCallback, oSettings ) {
                 oSettings.jqXHR = $.ajax( {
                     "dataType": 'json',
@@ -49,7 +52,10 @@
                                 obj.name,
                                 obj.massInKg,
                                 obj.energyTotal,
-                                obj.energyPerKg / 10
+				obj.priceInEuroCent,
+				(obj.energyTotal / obj.priceInEuroCent * 100).toFixed(2),
+                                obj.energyPerKg / 10,
+                                obj.isVegetarian ? 'nein' : 'ja'
                             ];
 
                             return arr;
