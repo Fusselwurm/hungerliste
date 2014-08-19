@@ -7,9 +7,12 @@ Diese Anwendung ist in der Lage, das aktuelle Angebot aus deiner Kantine hübsch
 Fies zusammengehackt im Moment.
 
 Datenpunkte die zZt aus der Seite geholt werden:
+* Name
 * Masse
-* Energiegehalt
-
+* Energie
+* Energie/Preis
+* Preis
+* Vegetarisch?
 
 # Voraussetzungen
 
